@@ -1,4 +1,9 @@
 import "./App.css";
+import { normalizeDomain } from "./utils/normalizeDomain";
+import { isValidDomain } from "./utils/validateDomain";
+import { fetchTxtRecords } from "./utils/dnsLookup";
+import { extractSpfRecords } from "./utils/extractSpf";
+import { highlightSpf } from "./utils/highlightSpf";
 import { useState } from "react";
 
 function App() {
@@ -6,50 +11,6 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [spfRecords, setSpfRecords] = useState([]);
-
-  const normalizeDomain = (input) => {
-    let value = input.trim().toLowerCase();
-
-    value = value.replace(/^https?:\/\//, "");
-    value = value.replace(/\/$/, "");
-
-    return value;
-  };
-
-  const isValidDomain = (value) => {
-    const domainRegex = /^(?!-)(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/;
-
-    return domainRegex.test(value);
-  };
-
-  const fetchTxtRecords = async (domain) => {
-    const endpoint = `https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT`;
-
-    const response = await fetch(endpoint, {
-      headers: {
-        Accept: "application/dns-json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("DNS lookup failed");
-    }
-
-    return response.json();
-  };
-
-  const extractSpfRecords = (dnsData) => {
-    if (!dnsData.Answer) return [];
-
-    // Return e amra jei object pacchi, we go with the answer portion here!
-    return dnsData.Answer.filter((record) => record.type === 16) // TXT
-      .map((record) =>
-        record.data
-          .replace(/"/g, "") // remove quotes
-          .trim()
-      )
-      .filter((txt) => txt.startsWith("v=spf1"));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,31 +49,6 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // For Making it more UX Friendly!
-  const highlightSpf = (spf) => {
-    const tokens = spf.split(" ");
-
-    return tokens.map((token, index) => {
-      if (token.startsWith("include:")) {
-        return (
-          <span key={index} className="text-blue-600 font-medium">
-            {token}{" "}
-          </span>
-        );
-      }
-
-      if (token.startsWith("redirect=")) {
-        return (
-          <span key={index} className="text-purple-600 font-medium">
-            {token}{" "}
-          </span>
-        );
-      }
-
-      return <span key={index}>{token} </span>;
-    });
   };
 
   return (
