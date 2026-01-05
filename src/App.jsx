@@ -55,6 +55,10 @@ function App() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-semibold text-center mb-4">SPF Checker</h1>
+        <p className="text-sm text-gray-600 text-center mb-4 ">
+          Check SPF (Sender Policy Framework) records using <br />{" "}
+          DNS-over-HTTPS
+        </p>
 
         {/* This is where we place the form, Might make it better later on */}
         <form className="space-y-4" onSubmit={handleSubmit}>

@@ -1,16 +1,50 @@
-# React + Vite
+# SPF Checker Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple single-page application that allows users to check the SPF (Sender Policy Framework) record of a domain by querying its DNS TXT records.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Domain input with validation
+- DNS TXT lookup using DNS-over-HTTPS
+- SPF record detection (`v=spf1`)
+- Highlighted `include:` and `redirect=` mechanisms
+- Loading and error states
+- Responsive, clean UI
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React (Vite)
+- Tailwind CSS
+- Cloudflare DNS-over-HTTPS API
 
-## Expanding the ESLint configuration
+## How It Works
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Browsers cannot perform raw DNS lookups directly.  
+This app uses Cloudflare’s public DNS-over-HTTPS API to fetch TXT records and then filters SPF entries on the client side.
+
+## Getting Started
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/raisulconnects/spf-checker-app.git
+cd spf-checker-app
+npm install
+npm run dev
+```
+
+### The app will be available at:
+
+```bash
+http://localhost:5173
+```
+
+## Assumptions & Limitations
+
+- Frontend-only application, all processing happens client-side (no backend)
+- Uses a public DNS-over-HTTPS API (may have rate limits for high-volume usage)
+- Only detects SPF records starting with `v=spf1`; does not fully validate SPF syntax or recursively resolve `include:` / `redirect=` domains
+
+# Live Demo
+
+### A working demo is hosted on Netlify: [https://spfchecker.netlify.app](https://spfchecker.netlify.app)
