@@ -41,6 +41,7 @@ function App() {
   const extractSpfRecords = (dnsData) => {
     if (!dnsData.Answer) return [];
 
+    // Return e amra jei object pacchi, we go with the answer portion here!
     return dnsData.Answer.filter((record) => record.type === 16) // TXT
       .map((record) =>
         record.data
@@ -75,6 +76,7 @@ function App() {
       const dnsData = await fetchTxtRecords(normalized);
       console.log(dnsData);
       const spf = extractSpfRecords(dnsData);
+      console.log(spf);
 
       if (spf.length === 0) {
         setError("No SPF record found for this domain.");
@@ -86,6 +88,31 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // For Making it more UX Friendly!
+  const highlightSpf = (spf) => {
+    const tokens = spf.split(" ");
+
+    return tokens.map((token, index) => {
+      if (token.startsWith("include:")) {
+        return (
+          <span key={index} className="text-blue-600 font-medium">
+            {token}{" "}
+          </span>
+        );
+      }
+
+      if (token.startsWith("redirect=")) {
+        return (
+          <span key={index} className="text-purple-600 font-medium">
+            {token}{" "}
+          </span>
+        );
+      }
+
+      return <span key={index}>{token} </span>;
+    });
   };
 
   return (
@@ -130,12 +157,19 @@ function App() {
             </h2>
 
             {spfRecords.map((record, index) => (
-              <pre
+              <div
                 key={index}
                 className="bg-gray-100 p-3 rounded-md text-sm overflow-x-auto"
               >
-                {record}
-              </pre>
+                {highlightSpf(record)}
+
+                <div className="mt-2 text-xs text-gray-500 pt-5">
+                  <span className="text-blue-600 font-medium">• include:</span>{" "}
+                  included domain •{" "}
+                  <span className="text-purple-600 font-medium">redirect=</span>{" "}
+                  redirected SPF
+                </div>
+              </div>
             ))}
           </div>
         )}
