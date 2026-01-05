@@ -22,25 +22,70 @@ function App() {
     return domainRegex.test(value);
   };
 
-  const handleSubmit = (e) => {
+  const fetchTxtRecords = async (domain) => {
+    const endpoint = `https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT`;
+
+    const response = await fetch(endpoint, {
+      headers: {
+        Accept: "application/dns-json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("DNS lookup failed");
+    }
+
+    return response.json();
+  };
+
+  const extractSpfRecords = (dnsData) => {
+    if (!dnsData.Answer) return [];
+
+    return dnsData.Answer.filter((record) => record.type === 16) // TXT
+      .map((record) =>
+        record.data
+          .replace(/"/g, "") // remove quotes
+          .trim()
+      )
+      .filter((txt) => txt.startsWith("v=spf1"));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
     setSpfRecords([]);
+    setLoading(true);
 
     const normalized = normalizeDomain(domain);
 
     if (!normalized) {
       setError("Please enter a domain name.");
+      setLoading(false);
       return;
     }
 
     if (!isValidDomain(normalized)) {
       setError("Please enter a valid domain name.");
+      setLoading(false);
       return;
     }
 
-    console.log("Normalized domain:", normalized);
+    try {
+      const dnsData = await fetchTxtRecords(normalized);
+      console.log(dnsData);
+      const spf = extractSpfRecords(dnsData);
+
+      if (spf.length === 0) {
+        setError("No SPF record found for this domain.");
+      } else {
+        setSpfRecords(spf);
+      }
+    } catch (err) {
+      setError("Unable to fetch DNS records. Please try again.", err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,13 +110,34 @@ function App() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            disabled={loading}
+            className={`w-full py-2 rounded-md text-white transition ${
+              loading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            Check SPF
+            {loading ? "Checking..." : "Check SPF"}
           </button>
         </form>
         {error && (
           <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+        )}
+        {spfRecords.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700">
+              SPF Record(s):
+            </h2>
+
+            {spfRecords.map((record, index) => (
+              <pre
+                key={index}
+                className="bg-gray-100 p-3 rounded-md text-sm overflow-x-auto"
+              >
+                {record}
+              </pre>
+            ))}
+          </div>
         )}
       </div>
     </div>
