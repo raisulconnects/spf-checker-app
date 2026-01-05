@@ -1,4 +1,5 @@
 import "./App.css";
+import Spinner from "./components/Spinner";
 import { normalizeDomain } from "./utils/normalizeDomain";
 import { isValidDomain } from "./utils/validateDomain";
 import { fetchTxtRecords } from "./utils/dnsLookup";
@@ -84,7 +85,7 @@ function App() {
                 : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {loading ? "Checking..." : "Check SPF"}
+            {loading ? <Spinner /> : "Check SPF"}
           </button>
         </form>
         {error && (
